@@ -9,7 +9,7 @@ module.exports = {
         [],
         [],
       ],
-      hits: [false, false, false],
+      hits: [false, false],
       length: 2,
     },
     cruiser: {
@@ -56,16 +56,16 @@ module.exports = {
   },
 
   generateShipLocations: function () {
-    // TODO: !!!!!!!!!! FIX THIS SERIOUS PERFORMANCE ISSUE !!!!!!!!!!
-
-    const shipKeys = Object.keys(this.ships);
-    let i = 0;
-    while (i < shipKeys.length) {
-      this.generateShip(this.ships[shipKeys[i]]);
-      if (!this.collision()) {
-        i++;
-      }
-    }
+    let count = 1;
+    do {
+      this.generateShip(this.ships.battleShip);
+      this.generateShip(this.ships.cruiser);
+      this.generateShip(this.ships.destroyer);
+      if (!this.collision()) break;
+      this.generateEmptyBoard();
+      count++;
+    } while (true);
+    console.log(`Generated Board.\nTook ${count} tries`);
   },
 
   generateShip: function (ship) {
@@ -134,7 +134,7 @@ module.exports = {
     const shipKeys = Object.keys(this.ships);
     let hitShipKey = '';
     for (let i = 0; i < shipKeys.length; i++) {
-      console.log(this.ships[shipKeys[i]].location);
+      console.log(`${shipKeys[i]}`, this.ships[shipKeys[i]].location);
       // loop through ships
       const currShip = this.ships[shipKeys[i]];
       for (let j = 0; j < currShip.length; j++) {
@@ -149,10 +149,15 @@ module.exports = {
         }
       }
     }
+    console.log('hits', this.ships[hitShipKey].hits);
     if (this.ships[hitShipKey].hits.every((hit) => hit === true)) {
       // sunk
       this.sunkShips++;
-      return 'Argh! You sunk my ship!';
+      if (this.sunkShips >= Object.keys(this.ships).length) {
+        this.startGame();
+        return 'Argh! You win!\nRestarting game...';
+      }
+      return `Argh! You sunk my ${hitShipKey}!`;
     } else {
       return 'Argh! You hit my ship!';
     }
@@ -183,6 +188,11 @@ module.exports = {
           case 2:
             // hit
             currRow.push('X\t');
+            break;
+          default:
+            console.error(
+              `While generating ships got a unexpected state of: ${state}`
+            );
             break;
         }
       }
