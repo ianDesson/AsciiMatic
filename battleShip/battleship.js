@@ -57,11 +57,15 @@ module.exports = {
 
   generateShipLocations: function () {
     // TODO: !!!!!!!!!! FIX THIS SERIOUS PERFORMANCE ISSUE !!!!!!!!!!
-    do {
-      this.generateShip(this.ships.battleShip);
-      this.generateShip(this.ships.cruiser);
-      this.generateShip(this.ships.destroyer);
-    } while (this.collision());
+
+    const shipKeys = Object.keys(this.ships);
+    let i = 0;
+    while (i < shipKeys.length) {
+      this.generateShip(this.ships[shipKeys[i]]);
+      if (!this.collision()) {
+        i++;
+      }
+    }
   },
 
   generateShip: function (ship) {
