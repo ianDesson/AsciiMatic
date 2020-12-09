@@ -12,11 +12,19 @@ module.exports = {
     if (!args.length) {
       message.channel.send("You didn't provide any arguments!");
     } else if (args[0] === 'start') {
-      battleShip.startGame();
-      message.channel.send(formatForDiscord(battleship.drawBoard()));
+      if (args[1]) {
+        const difficulty = parseInt(args[1]);
+        if (difficulty > 4 || difficulty < 1) {
+          message.channel.send("That difficulty is not an option!");
+        }
+        battleShip.startGame(difficulty);
+      } else {
+        battleShip.startGame();
+      }
+      message.channel.send(formatForDiscord(battleship.drawBoard('C')));
     } else if (args[0] === 'fire' && args.length === 2) {
       message.channel.send(battleShip.fire(args[1]));
-      message.channel.send(formatForDiscord(battleship.drawBoard()));
+      message.channel.send(formatForDiscord(battleship.drawBoard('C')));
     }
   },
 };

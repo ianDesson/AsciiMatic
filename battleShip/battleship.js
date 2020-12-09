@@ -1,7 +1,8 @@
 module.exports = {
   boardSize: 8,
   sunkShips: 0,
-  board: [],
+  computerBoard: [],
+  computerDifficulty: 1,
   ships: {
     destroyer: {
       location: [
@@ -35,17 +36,30 @@ module.exports = {
     },
   },
 
-  startGame: function () {
+
+  /**
+   * Bot difficulty settings:
+   * 1 (Easy): randomly shoot at board until win (avoid already shot places)
+   * 2 (Medium): randomly shoot near ships (requires rng restrictions)
+   * 3 (Hard): Each shot has a 50% chance of hitting
+   * 4 (Impossible): Every shot lands
+   */
+
+  startGame: function (difficulty) {
+    if (difficulty) {
+      this.computerDifficulty = difficulty;
+    }
     this.resetShips();
-    this.generateEmptyBoard();
+    this.computerBoard = this.generateEmptyBoard();
     this.generateShipLocations();
   },
 
   generateEmptyBoard: function () {
-    this.board = [];
+    let board = [];
     for (let i = 0; i < this.boardSize; i++) {
-      this.board.push(new Array(this.boardSize).fill(0));
+      board.push(new Array(this.boardSize).fill(0));
     }
+    return board;
   },
 
   resetShips: function () {
@@ -61,8 +75,9 @@ module.exports = {
       this.generateShip(this.ships.battleShip);
       this.generateShip(this.ships.cruiser);
       this.generateShip(this.ships.destroyer);
-      if (!this.collision()) break;
-      this.generateEmptyBoard();
+      console.log(this.drawBoard('C'))
+      if (!this.collision(this.computerBoard)) break;
+      this.computerBoard = this.generateEmptyBoard();
       count++;
     } while (true);
     console.log(`Generated Board.\nTook ${count} tries`);
@@ -84,24 +99,24 @@ module.exports = {
       if (direction === 1) {
         // horizontal
         ship.location[i] = [row, col + i];
-        this.board[col + i][row]++;
+        this.computerBoard[col + i][row]++;
       } else {
         ship.location[i] = [row + i, col];
-        this.board[col][row + i]++;
+        this.computerBoard[col][row + i]++;
       }
     }
   },
 
-  collision: function () {
+  collision: function (board) {
     for (let y = 0; y < this.boardSize; y++) {
       for (let x = 0; x < this.boardSize; x++) {
-        if (this.board[y][x] >= 2) return true;
+        if (board[y][x] >= 2) return true;
       }
     }
     return false;
   },
 
-  fire: function (coordinates) {
+  fire: function (board, coordinates) {
     if (coordinates.length !== 2) return 'Incorrect input!';
     coordinates = coordinates.split('');
     if (!coordinates[0].match(/[a-zA-Z]/) || !coordinates[1].match(/^\d+$/))
@@ -111,15 +126,15 @@ module.exports = {
     const xCoord = parseInt(coordinates[1]);
     if (xCoord >= 8 || yCoord >= 8) return 'Incorrect input!';
 
-    switch (this.board[yCoord][xCoord]) {
+    switch (board[yCoord][xCoord]) {
       case 0:
         // miss
-        this.board[yCoord][xCoord]--;
+        board[yCoord][xCoord]--;
         return 'Oof! Ya missed.';
       case 1:
         // hit
-        this.board[yCoord][xCoord]++;
-        return this.updateShipHit(xCoord, yCoord);
+        board[yCoord][xCoord]++;
+        return updateShipHit(xCoord, yCoord);
       case -1:
         // already missed here
         return "Oi Matey! You already missed 'ere!";
@@ -163,7 +178,11 @@ module.exports = {
     }
   },
 
-  drawBoard: function () {
+  drawBoard: function (choice) {
+    let board = [];
+    if (choice === 'C') {
+      board = this.computerBoard;
+    }
     let topRow = ['\\'];
     let boardRows = [];
     for (let i = 0; i < this.boardSize; i++) {
@@ -171,7 +190,7 @@ module.exports = {
       let currRow = [];
       currRow.push(`${String.fromCharCode(i + 65)}\t`);
       for (let j = 0; j < this.boardSize; j++) {
-        const state = this.board[i][j];
+        const state = board[i][j];
         switch (state) {
           case 0:
             // nothing
